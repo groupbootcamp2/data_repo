@@ -8,14 +8,15 @@ def unpickle(file):
     return dict
 
 
-def create_df():
+def create_df(datasetType):
     df = pd.DataFrame()
+    dataset="cifar"+str(datasetType)
     dirname="C:\\Users\\User\\Downloads\\cifar-10-python\\cifar-10-batches-py"
     for i in range(1,6):
         file=os.path.join(dirname,"data_batch_"+str(i))
         dict=unpickle(file)
-        DICTLEN=len(dict[ b'filenames'])
-        newDict={"images":dict[ b'filenames'],"labels": dict[b'labels'] , "source_image": ["cifar10"]*DICTLEN, "batch":[i]*DICTLEN}
+        DictLen=len(dict[ b'filenames'])
+        newDict={"image_file":dict[ b'filenames'], "label": dict[b'labels'] , "source_image": [dataset]*DictLen, "batch":[i]*DictLen}
         newDF=pd.DataFrame(newDict)
         df=pd.concat([df,newDF])
     return df
@@ -23,7 +24,7 @@ def create_df():
 
 def write_df_to_csv(df):
     df.to_csv("C:\\Users\\User\\Downloads\\cifar10.csv")
-df=create_df()
+df=create_df(10)
 write_df_to_csv(df)
 
 csv=pd.read_csv("C:\\Users\\User\\Downloads\\cifar10.csv")
