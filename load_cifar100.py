@@ -11,13 +11,6 @@ def unpickle(file):
 def create_df():
     # df = pd.DataFrame()
     dirname=".\\cifar-100-python\\cifar-100-python"
-    # for i in range(1,6):
-    #     file=os.path.join(dirname,"data_batch_"+str(i))
-    #     dict=unpickle(file)
-    #     DICTLEN=len(dict[ b'filenames'])
-    #     newDict={"images":dict[ b'filenames'],"labels": dict[b'labels'] , "source_image": ["cifar10"]*DICTLEN, "batch":[i]*DICTLEN}
-    #     newDF=pd.DataFrame(newDict)
-    #     df=pd.concat([df,newDF])
     dict=unpickle(os.path.join(dirname,"train"))
     DICTLEN = len(dict[b'filenames'])
     newDict = {"images": dict[b'filenames'], "labels": dict[b'coarse_labels']}
