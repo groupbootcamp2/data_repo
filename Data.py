@@ -42,7 +42,7 @@ def create_df_and_images(datasetType):
 def write_df_to_csv(df):
     df.to_csv("..\\cifar10.csv")
 
-
+#main
 
 df=create_df_and_images(10)
 write_df_to_csv(df)
