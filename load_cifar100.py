@@ -22,14 +22,14 @@ def write_df_to_csv(df):
     df.to_csv("./cifar10.csv")
 
 def from_cifar100(df,categorys_numbers):
+    indexes_to_drop=[]
     for ind in range(len(df)):
         if df.loc[ind,'labels'] not in categorys_numbers:
             df.drop(ind,inplace=True)
-    print(df)
     return df
 
 df=create_df()
-print(df)
+# print(df)
 df=from_cifar100(df,[1,2,3,4,5])
 print(df)
 # write_df_to_csv(df)
