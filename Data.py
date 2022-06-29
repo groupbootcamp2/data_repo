@@ -13,7 +13,7 @@ def unpickle(file):
 def create_df_and_images(datasetType):
     df = pd.DataFrame()
     dataset="cifar"+str(datasetType)
-    dirname="..\\cifar-10-batches-py"
+    dirname="..\\cifar-10-python\\cifar-10-batches-py"
     for i in range(1,6):
         file=os.path.join(dirname,"data_batch_"+str(i))
         dict=unpickle(file)
