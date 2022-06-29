@@ -32,7 +32,6 @@ df=create_df()
 # print(df)
 df=from_cifar100(df,[1,2,3,4,5])
 print(df)
-# write_df_to_csv(df)
 
-# csv=pd.read_csv("./cifar10.csv")
-# print(csv)
+def write_df_to_csv(df):
+    df.to_csv("..\\cifar10.csv")
