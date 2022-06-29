@@ -25,7 +25,6 @@ def create_df(datasetType):
 
         for arr in range(DictLen):
             array = np.array(dict[b'data'][arr])
-            # newDF.iloc[arr]['image_name'] = newDF.iloc[arr]['image_name'][:10]
             rgbArray = np.zeros((32, 32, 3), 'uint8')
             rgbArray[..., 0] = array[:1024].reshape(32, 32)
             rgbArray[..., 1] = array[1024:2048].reshape(32, 32)
