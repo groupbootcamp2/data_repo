@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import os
 from PIL import Image as im
+
 def unpickle(file):
     import pickle
     with open(file, 'rb') as fo:
@@ -9,7 +10,7 @@ def unpickle(file):
     return dict
 
 
-def create_df(datasetType):
+def create_df_and_images(datasetType):
     df = pd.DataFrame()
     dataset="cifar"+str(datasetType)
     dirname="..\\cifar-10-batches-py"
@@ -23,6 +24,7 @@ def create_df(datasetType):
         print(type(str(newDict["image_name"][0])))
         newDF=pd.DataFrame(newDict)
 
+        #images
         for arr in range(DictLen):
             array = np.array(dict[b'data'][arr])
             rgbArray = np.zeros((32, 32, 3), 'uint8')
@@ -33,13 +35,16 @@ def create_df(datasetType):
             img.save(path+newDF.iloc[arr]["image_name"])
 
         df=pd.concat([df,newDF])
+
     return df
 
 
 def write_df_to_csv(df):
     df.to_csv("..\\cifar10.csv")
-df=create_df(10)
-write_df_to_csv(df)
 
+
+
+df=create_df_and_images(10)
+write_df_to_csv(df)
 csv=pd.read_csv("..\\cifar10.csv")
 print(csv)
