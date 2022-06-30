@@ -18,13 +18,12 @@ def create_df_and_images(datasetType):
         file=os.path.join(dirname,"data_batch_"+str(i))
         dict=unpickle(file)
         DictLen=len(dict[ b'filenames'])
-        path="..\\resources\\"
-        newDict={"image_name":dict[ b'filenames'],"image_path":[path]*DictLen, "label": dict[b'labels'] , "source_image": [dataset]*DictLen, "batch":[i]*DictLen}
+        imagePath="..\\resources\\"
+        newDict={"image_name":dict[ b'filenames'],"image_path":[imagePath]*DictLen, "label": dict[b'labels'] , "source_image": [dataset]*DictLen, "batch":[i]*DictLen}
         newDict["image_name"]=[(str(sub)).replace("'", "")[1:] for sub in newDict["image_name"]]
-        print(type(str(newDict["image_name"][0])))
         newDF=pd.DataFrame(newDict)
 
-        #images
+        #create the images from data and save in resources
         for arr in range(DictLen):
             array = np.array(dict[b'data'][arr])
             rgbArray = np.zeros((32, 32, 3), 'uint8')
@@ -32,7 +31,7 @@ def create_df_and_images(datasetType):
             rgbArray[..., 1] = array[1024:2048].reshape(32, 32)
             rgbArray[..., 2] = array[2048:3072].reshape(32, 32)
             img = im.fromarray(rgbArray)
-            img.save(path+newDF.iloc[arr]["image_name"])
+            img.save(imagePath+newDF.iloc[arr]["image_name"])
 
         df=pd.concat([df,newDF])
 
