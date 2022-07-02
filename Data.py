@@ -13,12 +13,12 @@ def unpickle(file):
 def create_df_and_images(datasetType):
     df = pd.DataFrame()
     dataset="cifar"+str(datasetType)
-    dirname="..\\cifar-10-python\\cifar-10-batches-py"
+    dirname=".\\cifar-10-python\\cifar-10-batches-py"
     for i in range(1,6):
         file=os.path.join(dirname,"data_batch_"+str(i))
         dict=unpickle(file)
         DictLen=len(dict[ b'filenames'])
-        path="..\\resources\\"
+        path=".\\resources\\"
         newDict={"image_name":dict[ b'filenames'],"image_path":[path]*DictLen, "label": dict[b'labels'] , "source_image": [dataset]*DictLen, "batch":[i]*DictLen}
         newDict["image_name"]=[(str(sub)).replace("'", "")[1:] for sub in newDict["image_name"]]
         print(type(str(newDict["image_name"][0])))
