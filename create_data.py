@@ -4,10 +4,10 @@ import os
 from PIL import Image as im
 from typing import List
 from sklearn.utils import shuffle
-import glob
 import cv2
+from PIL import Image
+import config as cnfg
 
-CSV_PATH = "..\\cifar10_100.csv"
 
 
 def create_classes_dict():
@@ -32,6 +32,7 @@ def create_df(datasetType: int, files_list: List[str], labels: str):
     dataset = f"cifar {datasetType}"
     dirname = f"..\\cifar-{datasetType}"
     path = "..\\resources\\"
+
     for i in range(len(files_list)):
         file = os.path.join(dirname, files_list[i])
         dict = unpickle(file)
@@ -44,17 +45,20 @@ def create_df(datasetType: int, files_list: List[str], labels: str):
         image_data.extend(dict[b'data'])
     return df, image_data[1:]
 
+def save_image( data_arr, path_to_save):
+    array = np.array(data_arr)
+    rgbArray = np.zeros((32, 32, 3), 'uint8')
+    rgbArray[..., 0] = array[:1024].reshape(32, 32)
+    rgbArray[..., 1] = array[1024:2048].reshape(32, 32)
+    rgbArray[..., 2] = array[2048:3072].reshape(32, 32)
+    img = im.fromarray(rgbArray)
+    img.save(path_to_save)
+
 
 def save_images(df, data):
     for arr in range(len(data)):
         print(arr)
-        array = np.array(data[arr])
-        rgbArray = np.zeros((32, 32, 3), 'uint8')
-        rgbArray[..., 0] = array[:1024].reshape(32, 32)
-        rgbArray[..., 1] = array[1024:2048].reshape(32, 32)
-        rgbArray[..., 2] = array[2048:3072].reshape(32, 32)
-        img = im.fromarray(rgbArray)
-        img.save(df.iloc[arr]["image_path"] + df.iloc[arr]["image_name"])
+        save_image(data[arr],df.iloc[arr]["image_path"] + df.iloc[arr]["image_name"])
 
 
 def choose_x_labels_from_cifar100(df, imgs, categorys_numbers, old_csv):
@@ -62,7 +66,6 @@ def choose_x_labels_from_cifar100(df, imgs, categorys_numbers, old_csv):
     df['index'] = [i for i in range(len(df['label']))]
     df['label'] = [label + 10 for label in df["label"]]
     categorys_numbers = categorys_numbers + 10
-    print(categorys_numbers)
     df = df[(df['label'].isin(categorys_numbers)) & (~df['label'].isin(old_csv['label'].value_counts().keys()))]
     for i in df['index']:
         images.append(imgs[i])
@@ -70,28 +73,29 @@ def choose_x_labels_from_cifar100(df, imgs, categorys_numbers, old_csv):
     return df, images[1:]
 
 
-# def write_df_to_csv(df,path=CSV_PATH, newFile=False):
-#     if newFile:
-#         df.to_csv(path)
-#     else:
-#         try:
-#             with open(path, 'a') as fd:
-#                 fd.writelines(df)
-#         except:
-#             print("except from write df to csv" )
-#             df.to_csv(path)
 
 
-def write_df_to_csv(df, path=CSV_PATH, newFile=False):
+def insert_personal_image_to_csv (image_name:str, label:int ):
+    df = pd.DataFrame({"image_name": [image_name], "image_path": [cnfg.images_directory_path], "source_image":['personal'], "batch": ['test'], "label": [label]})
+    write_df_to_csv(df)
+    im = Image.open(cnfg.personal_image_path)
+    im_resize=im.resize((32,32))
+    im_resize.save(df.iloc[0]["image_path"] + df.iloc[0]["image_name"])
+
+
+
+
+
+def write_df_to_csv(df, newFile=False):
     if newFile:
-        if (os.path.exists(newFile) and os.path.isfile(newFile)):
-            os.remove(newFile)
-    df.to_csv(path,mode='a')
+        df.to_csv(cnfg.csv_path, index=False)
+    else:
+        df.to_csv(cnfg.csv_path, mode='a', index=False, header=False)
 
 
-# def read_csv11(path=CSV_PATH):
+# def read_csv11():
 #     try:
-#         with open(path, 'r') as fd:
+#         with open(cnfg.csv_path, 'r') as fd:
 #             return fd.read()
 #     except:
 #         return "no file"
@@ -100,43 +104,47 @@ def write_df_to_csv(df, path=CSV_PATH, newFile=False):
 def load_cifar10():
     df, image_data = create_df(10, [('data_batch_' + str(i)) for i in range(1, 6)] + ["test_batch"], b'labels')
     write_df_to_csv(df, newFile=True)
-    save_images(df, image_data)
+    #save_images(df, image_data)
     return df
 
 
 def load_x_labels_from_cifar100(categorys_numbers: List[int]):
-    old_csv = pd.DataFrame(pd.read_csv(CSV_PATH))
+    old_csv = pd.DataFrame(pd.read_csv(cnfg.csv_path))
     cifar100, image_data = create_df(100, ['train', 'test'], b'coarse_labels')
     cifar100, image_data = choose_x_labels_from_cifar100(cifar100, image_data, np.array(categorys_numbers), old_csv)
-
     write_df_to_csv(cifar100)
-    save_images(cifar100, image_data)
+    #save_images(cifar100, image_data)
     return cifar100
 
 
-# 11odo: genery precent and add owner images to test
-def split_train_test_validation(path=CSV_PATH):
+# 11todo: genery precent and add owner images to test
+def split_train_test_validation():
     # read data from csv and split cifar10 and cifar100
-    cifar10_100 = pd.read_csv(path)
+    cifar10_100 = pd.read_csv(cnfg.csv_path)
     cifar10 = cifar10_100[cifar10_100['source_image'] == 'cifar 10']
     cifar100 = cifar10_100[cifar10_100['source_image'] == 'cifar 100']
     cifar100 = shuffle(cifar100)
+    personal=cifar10_100[cifar10_100['source_image'] == 'personal']
     len_cifar_10 = len(cifar10)
     len_cifar_100 = len(cifar100)
     # split cifar10 to train validation test
-    x_train = cifar10.iloc[:int(0.6 * len_cifar_10), :-1]
-    y_train = cifar10.iloc[:int(0.6 * len_cifar_10), -1]
-    x_validation = cifar10.iloc[int(0.6 * len_cifar_10):int(0.8 * len_cifar_10), :-1]
-    y_validation = cifar10.iloc[int(0.6 * len_cifar_10):int(0.8 * len_cifar_10), -1]
-    x_test = cifar10.iloc[int(0.8 * len_cifar_10):, :-1]
-    y_test = cifar10.iloc[int(0.8 * len_cifar_10):, -1]
+    x_train = cifar10.iloc[:int(cnfg.train_part * len_cifar_10), :-1]
+    y_train = cifar10.iloc[:int(cnfg.train_part * len_cifar_10), -1]
+    x_validation = cifar10.iloc[int(cnfg.train_part * len_cifar_10):int((cnfg.train_part+cnfg.validation_part) * len_cifar_10), :-1]
+    y_validation = cifar10.iloc[int(cnfg.train_part * len_cifar_10):int((cnfg.train_part+cnfg.validation_part) * len_cifar_10), -1]
+    x_test = cifar10.iloc[int((1-cnfg.test_part) * len_cifar_10):, :-1]
+    y_test = cifar10.iloc[int((1-cnfg.test_part) * len_cifar_10):, -1]
     # split cifar100 to train validation test
-    x_train = pd.concat([x_train, cifar100[cifar100['batch'] == 'train'].iloc[:int(0.6 * len_cifar_100), :-1]])
-    y_train = pd.concat([y_train, cifar100.iloc[:int(0.6 * len_cifar_100), -1]])
-    x_validation = pd.concat([x_validation, cifar100.iloc[int(0.6 * len_cifar_100):int(0.8 * len_cifar_100), :-1]])
-    y_validation = pd.concat([y_validation, cifar100.iloc[int(0.6 * len_cifar_100):int(0.8 * len_cifar_100), -1]])
-    x_test = pd.concat([x_test, cifar100.iloc[int(0.8 * len_cifar_100):, :-1]])
-    y_test = pd.concat([y_test, cifar100.iloc[int(0.8 * len_cifar_100):, -1]])
+    # x_train = pd.concat([x_train, cifar100[cifar100['batch'] == 'train'].iloc[:int(cnfg.train_part * len_cifar_100), :-1]])???
+    x_train = pd.concat([x_train, cifar100.iloc[:int(cnfg.train_part * len_cifar_100), :-1]])
+    y_train = pd.concat([y_train, cifar100.iloc[:int(cnfg.train_part * len_cifar_100), -1]])
+    x_validation = pd.concat([x_validation, cifar100.iloc[int(cnfg.train_part * len_cifar_100):int((cnfg.train_part+cnfg.validation_part)  * len_cifar_100), :-1]])
+    y_validation = pd.concat([y_validation, cifar100.iloc[int(cnfg.train_part * len_cifar_100):int((cnfg.train_part+cnfg.validation_part)  * len_cifar_100), -1]])
+    x_test = pd.concat([x_test, cifar100.iloc[int((1-cnfg.test_part) * len_cifar_100):, :-1]])
+    y_test = pd.concat([y_test, cifar100.iloc[int((1-cnfg.test_part) * len_cifar_100):, -1]])
+    #add personal images to test
+    x_test = pd.concat([x_test, personal[:-1]])
+    y_test = pd.concat([y_test, personal.iloc[:,-1]])
 
     return x_train, x_validation, x_test, y_train, y_validation, y_test
 
@@ -144,10 +152,9 @@ def split_train_test_validation(path=CSV_PATH):
 def save_images_as_nparray():
     Xtrain, Xvalidation, Xtest, Ytrain, Yvalidation, Ytest = split_train_test_validation()
 
-    images_Xtrain = [cv2.imread(Xtrain.iloc[i]['image_path'] + Xtrain.iloc[i]["image_name"]) for i in range(10)]
-    images_Xvalidation = [cv2.imread(Xvalidation.iloc[i]['image_path'] + Xvalidation.iloc[i]["image_name"]) for i in
-                          range(10)]
-    images_Xtest = [cv2.imread(Xtest.iloc[i]['image_path'] + Xtest.iloc[i]["image_name"]) for i in range(10)]
+    images_Xtrain = [cv2.imread(Xtrain.iloc[i]['image_path'] + Xtrain.iloc[i]["image_name"]) for i in range(len(Xtrain))]
+    images_Xvalidation = [cv2.imread(Xvalidation.iloc[i]['image_path'] + Xvalidation.iloc[i]["image_name"]) for i in range(len(Xvalidation))]
+    images_Xtest = [cv2.imread(Xtest.iloc[i]['image_path'] + Xtest.iloc[i]["image_name"]) for i in range(len(Xtest))]
 
     images_Xtrain = np.array((images_Xtrain))
     images_Xvalidation = np.array((images_Xvalidation))
