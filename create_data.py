@@ -11,10 +11,10 @@ import config as cnfg
 
 
 def create_classes_dict():
-    meta_dict10 = unpickle("..\\cifar-10\\batches.meta")
-    classes_dict = {np.arange(0, 10)[i]: (str(meta_dict10[b'label_names'][i]))[2:-1] for i in range(10)}
-    meta_dict100 = unpickle("..\\cifar-100\\meta")
-    classes_dict100 = {np.arange(10, 25)[i]: (str(meta_dict100[b'coarse_label_names'][i]))[2:-1] for i in range(15)}
+    meta_dict10 = unpickle(f"..\\{cnfg.cifar10}\\{cnfg.meta_file_cifar10}")
+    classes_dict = {np.arange(0, cnfg.num_classes_cifar10)[i]: (str(meta_dict10[b'label_names'][i]))[2:-1] for i in range(10)}
+    meta_dict100 = unpickle(f"..\\{cnfg.cifar100}\\{cnfg.meta_file_cifar100}")
+    classes_dict100 = {np.arange(cnfg.num_classes_cifar10, cnfg.num_classes_cifar10+cnfg.num_classes_cifar100)[i]: (str(meta_dict100[b'coarse_label_names'][i]))[2:-1] for i in range(15)}
     classes_dict.update(classes_dict100)
     return classes_dict
 
@@ -26,19 +26,15 @@ def unpickle(file):
     return dict
 
 
-def create_df(datasetType: int, files_list: List[str], labels: str):
+def create_df(dataset_dirname: str, files_list: List[str], labels: str):
     df = pd.DataFrame()
     image_data = [[0] * 3072]
-    dataset = f"cifar {datasetType}"
-    dirname = f"..\\cifar-{datasetType}"
-    path = "..\\resources\\"
-
     for i in range(len(files_list)):
-        file = os.path.join(dirname, files_list[i])
+        file = os.path.join(dataset_dirname, files_list[i])
         dict = unpickle(file)
         DictLen = len(dict[b'filenames'])
-        newDict = {"image_name": dict[b'filenames'], "image_path": [path] * DictLen,
-                   "source_image": [dataset] * DictLen, "batch": [files_list[i]] * DictLen, "label": dict[labels]}
+        newDict = {"image_name": dict[b'filenames'], "image_path": [cnfg.images_dir_path] * DictLen,
+                   "source_image": [dataset_dirname] * DictLen, "batch": [files_list[i]] * DictLen, "label": dict[labels]}
         newDict["image_name"] = [(str(sub)).replace("'", "")[1:] for sub in newDict["image_name"]]
         newDF = pd.DataFrame(newDict)
         df = pd.concat([df, newDF])
@@ -47,10 +43,11 @@ def create_df(datasetType: int, files_list: List[str], labels: str):
 
 def save_image( data_arr, path_to_save):
     array = np.array(data_arr)
-    rgbArray = np.zeros((32, 32, 3), 'uint8')
-    rgbArray[..., 0] = array[:1024].reshape(32, 32)
-    rgbArray[..., 1] = array[1024:2048].reshape(32, 32)
-    rgbArray[..., 2] = array[2048:3072].reshape(32, 32)
+    vector_size=cnfg.image_size*cnfg.image_size #vector_size_for_each_color
+    rgbArray = np.zeros((cnfg.image_size, cnfg.image_size, 3), 'uint8')
+    rgbArray[..., 0] = array[:vector_size].reshape(cnfg.image_size, cnfg.image_size)
+    rgbArray[..., 1] = array[vector_size:vector_size*2].reshape(cnfg.image_size, cnfg.image_size)
+    rgbArray[..., 2] = array[vector_size*2:vector_size*3].reshape(cnfg.image_size, cnfg.image_size)
     img = im.fromarray(rgbArray)
     img.save(path_to_save)
 
@@ -62,10 +59,10 @@ def save_images(df, data):
 
 
 def choose_x_labels_from_cifar100(df, imgs, categorys_numbers, old_csv):
-    images = [[0] * 3072]
+    images = [[0] * cnfg.image_size*cnfg.image_size*3]
     df['index'] = [i for i in range(len(df['label']))]
-    df['label'] = [label + 10 for label in df["label"]]
-    categorys_numbers = categorys_numbers + 10
+    df['label'] = [label + cnfg.num_classes_cifar10 for label in df["label"]]
+    categorys_numbers = categorys_numbers + cnfg.num_classes_cifar10
     df = df[(df['label'].isin(categorys_numbers)) & (~df['label'].isin(old_csv['label'].value_counts().keys()))]
     for i in df['index']:
         images.append(imgs[i])
@@ -79,7 +76,7 @@ def insert_personal_image_to_csv (image_name:str, label:int ):
     df = pd.DataFrame({"image_name": [image_name], "image_path": [cnfg.images_directory_path], "source_image":['personal'], "batch": ['test'], "label": [label]})
     write_df_to_csv(df)
     im = Image.open(cnfg.personal_image_path)
-    im_resize=im.resize((32,32))
+    im_resize=im.resize((cnfg.image_size,cnfg.image_size))
     im_resize.save(df.iloc[0]["image_path"] + df.iloc[0]["image_name"])
 
 
@@ -93,16 +90,8 @@ def write_df_to_csv(df, newFile=False):
         df.to_csv(cnfg.csv_path, mode='a', index=False, header=False)
 
 
-# def read_csv11():
-#     try:
-#         with open(cnfg.csv_path, 'r') as fd:
-#             return fd.read()
-#     except:
-#         return "no file"
-
-
 def load_cifar10():
-    df, image_data = create_df(10, [('data_batch_' + str(i)) for i in range(1, 6)] + ["test_batch"], b'labels')
+    df, image_data = create_df(cnfg.cifar10, cnfg.files_list_cifar10, cnfg.label_head_cifar10)
     write_df_to_csv(df, newFile=True)
     #save_images(df, image_data)
     return df
@@ -110,21 +99,20 @@ def load_cifar10():
 
 def load_x_labels_from_cifar100(categorys_numbers: List[int]):
     old_csv = pd.DataFrame(pd.read_csv(cnfg.csv_path))
-    cifar100, image_data = create_df(100, ['train', 'test'], b'coarse_labels')
+    cifar100, image_data = create_df(cnfg.cifar100, cnfg.files_list_cifar100 , cnfg.label_head_cifar100)
     cifar100, image_data = choose_x_labels_from_cifar100(cifar100, image_data, np.array(categorys_numbers), old_csv)
     write_df_to_csv(cifar100)
     #save_images(cifar100, image_data)
     return cifar100
 
 
-# 11todo: genery precent and add owner images to test
 def split_train_test_validation():
     # read data from csv and split cifar10 and cifar100
     cifar10_100 = pd.read_csv(cnfg.csv_path)
-    cifar10 = cifar10_100[cifar10_100['source_image'] == 'cifar 10']
-    cifar100 = cifar10_100[cifar10_100['source_image'] == 'cifar 100']
+    cifar10 = cifar10_100[cifar10_100['source_image'] == cnfg.cifar10]
+    cifar100 = cifar10_100[cifar10_100['source_image'] ==cnfg.cifar100]
     cifar100 = shuffle(cifar100)
-    personal=cifar10_100[cifar10_100['source_image'] == 'personal']
+    personal=cifar10_100[cifar10_100['source_image'] == cnfg.personal]
     len_cifar_10 = len(cifar10)
     len_cifar_100 = len(cifar100)
     # split cifar10 to train validation test
@@ -167,5 +155,5 @@ def save_images_as_nparray():
 
 def save_to_zip():
     images_Xtrain, images_Xvalidation, images_Xtest, Ytrain, Yvalidation, Ytest = save_images_as_nparray()
-    np.savez('cfar10_modified_1000.npz', train=images_Xtrain, ytrain=Ytrain, validation=images_Xvalidation,
+    np.savez(cnfg.z_file_path, train=images_Xtrain, ytrain=Ytrain, validation=images_Xvalidation,
              yvalidation=Yvalidation, test=images_Xtest, ytest=Ytest)
