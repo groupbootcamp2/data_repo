@@ -2,16 +2,16 @@ import create_data as cd
 import data_visualization as dv
 import config as cnfg
 #
-#cd.load_cifar10()
+# cd.load_cifar10()
 #
-#cifar10_100=cd.load_x_labels_from_cifar100([0,1,2,3,4])
-
-cd.insert_personal_image_to_csv("my try dog9.png",5 )
-
-dv.show_10_image_of_class(0, cnfg.cifar10)
-
+# cifar10_100=cd.load_x_labels_from_cifar100([0,1,2,4,14])
+#
+# cd.insert_personal_image_to_csv("my try dog00.png",5 )
+#
+# dv.show_10_image_of_class(0)
+# print(cd.create_classes_dict()  )
 dv.show_classes_count()
-
+#
 dv.show_splited_classes_count()
 
 #
