@@ -8,7 +8,7 @@ import compiled_model as c_model
 labels = c_model.load_our_labels()
 x_train, x_validation, x_test, y_train, y_validation, y_test = c_model.load_data()
 model = c_model.load_compiled_model()
-y_pred = model.predict(x_test)
+y_pred = model.predict(x_test, verbose=0)
 Y_pred_classes = np.argmax(y_pred, axis=1)
 Y_true = np.argmax(y_test, axis=1)
 
@@ -70,6 +70,7 @@ def plotmodelhistory():
     axs[1].set_ylabel('Loss')
     axs[1].set_xlabel('Epoch')
     axs[1].legend(['train', 'validate'], loc='upper left')
+    plt.tight_layout()
     plt.show()
 
 def show_samples_after_predict():

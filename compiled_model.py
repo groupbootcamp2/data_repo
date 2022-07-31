@@ -1,23 +1,22 @@
+import cv2
 import pandas as pd
 import keras
 import numpy as np
-from PIL import Image
+from keras.utils import load_img , img_to_array, save_img
 
 import config as cnfg
 import create_data as cd
 
 def load_compiled_model():
     model = keras.models.load_model(cnfg.model_path)
-    # model = keras.models.load_model("C://Users//1//Downloads//keras_cifar10_trained_model_1A.h5")
     return model
 
 def load_history():
     history=pd.read_csv(cnfg.history_path)
-    print(history.head())
     return history
 
 def load_data():
-    loaded_data = np.load('./cfar10_modified_1000.npz')
+    loaded_data = np.load('./'+cnfg.z_file_path)
     x_train = loaded_data['train'].astype('float32')/255
     x_validation = loaded_data['validation'].astype('float32')/255
     x_test = loaded_data['test'].astype('float32')/255
@@ -28,50 +27,62 @@ def load_data():
     y_train = keras.utils.to_categorical(y_train, num_classes)
     y_test = keras.utils.to_categorical(y_test, num_classes)
     y_validation = keras.utils.to_categorical(y_validation, num_classes)
-    return  x_train, x_validation, x_test, y_train, y_validation, y_test
+    return x_train, x_validation, x_test, y_train, y_validation, y_test
 
 def load_our_labels():
-    DATA = pd.read_csv(cnfg.csv_path)
-    value_count_dict = dict(DATA['label'].value_counts())
-    value_count_dict = {k: value_count_dict[k] for k in sorted(value_count_dict)}
-    labels_array = {label:cd.create_classes_dict()[label] for label in value_count_dict.keys()}
-    return labels_array
+    return cd.get_model_classes_dict()
+
+
+#load image with keras
+def preprecessing_for_predict1(image):
+    if isinstance(image, str):
+        image = load_img(image, target_size=(32,32))
+    image=img_to_array(image)
+    image = image.reshape(-1, 32, 32, 3)
+    image = image.astype('float32')
+    image /= 255
+    return image
+
+def predict_by_image1(image):
+    model = load_compiled_model()
+    image=preprecessing_for_predict(image)
+    prediction = model.predict(image,verbose=0)
+    print(prediction)
+    pred = np.argsort(prediction)
+    print(pred)
+    pred = pred[0][-3:]
+    print(pred)
+    labels = [cd.get_model_classes_dict()[pred[-1]], cd.get_model_classes_dict()[pred[-2]],
+              cd.get_model_classes_dict()[pred[-3]]]
+    print(labels)
+    percent = ["%5.2f" % (float(prediction[0][pred[-1]]) * 100) + "%",
+               "%5.2f" % (float(prediction[0][pred[-2]]) * 100) + "%",
+               "%5.2f" % (float(prediction[0][pred[-3]]) * 100) + "%"]
+    res_dict= {labels[i]: percent[i] for i in range(len(percent))}
+    print(res_dict)
+    return res_dict
+
+
+#load image with cv2
+def preprecessing_for_predict(image):
+    if isinstance(image, str):
+        image = cv2.imread(image)
+    image = cv2.resize(image, (32, 32), interpolation=cv2.INTER_AREA)
+    image = image.reshape(-1, 32, 32, 3)
+    image = image.astype('float32')
+    image /= 255
+    return image
 
 def predict_by_image(image):
-    print(type(image))
     model = load_compiled_model()
-    print("p nodel")
-
-    if isinstance(image, str):
-        image = Image.open(image)
-    print("aaa")
-    image = np.resize(image,(32, 32,3))
-    image = image.reshape(-1, 32, 32,3)
-    image = image.astype('float32')
-    image/=255
-    # pred = np.array(model.predict(image)[0])
-    pred = model.predict(image)[0]
-    arr = [1, 2, 3, 4, 5, 6, 7]
-    arr = arr[0:0] + arr[7:]
-    print(arr)
-    # y_test = keras.utils.to_categorical(y_test, num_classes)
-    print(pred)
-    print(np.sum(pred))
-    print(pred.argmax())
-    print(load_our_labels().values())
-    argmax1=pred.argmax()
-    print(argmax1)
-    max1=pred[argmax1]
-    print(max1)
-    pred=pred[1:2]+pred[argmax1+1:]
-    print(np.sum(pred))
-    argmax2= pred.argmax()
-    max2 = pred[argmax2]
-    print("67")
-    labels=load_our_labels()
-    print(labels)
-    print(labels.values()[0])
-    # res_dict={labels[argmax1]:max1,labels[argmax2]:max2}//אם זה לפי המקומות ולא הקי בדיקט
-    res_dict={labels.values()[argmax1]:max1,labels.values()[argmax2]:max2}
-    print(res_dict)
+    image = preprecessing_for_predict(image)
+    prediction = model.predict(image,verbose=0)
+    pred = np.argsort(prediction)
+    pred = pred[0][-3:]
+    labels = [cd.get_model_classes_dict()[pred[-1]], cd.get_model_classes_dict()[pred[-2]],
+              cd.get_model_classes_dict()[pred[-3]]]
+    percent = ["%5.2f" % (float(prediction[0][pred[-1]]) * 100) + "%",
+               "%5.2f" % (float(prediction[0][pred[-2]]) * 100) + "%",
+               "%5.2f" % (float(prediction[0][pred[-3]]) * 100) + "%"]
+    res_dict= {labels[i]: percent[i] for i in range(len(percent))}
     return res_dict

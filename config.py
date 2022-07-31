@@ -20,11 +20,14 @@ validation_part=0.2
 test_part=0.2
 
 z_file_path='cifer10_100_0_1_2_4_14.npz'
+z_label_dict_path='labels_dict.npz'
 personal_image_path="output1.png"
 
-model_path="..\\model_cnn_cifar_bootcamp"
-history_path="..\\history_model_cnn_cifar_bootcamp.csv"
-
+# model_path="..\\model_Anna_0_1_2_4_14_250epoch_2atNight"
+# history_path="..\\history_fnn_Anna__0_1_2_4_14_250epoch_2atNight.csv"
+model_path="..\\model_Anna_0_1_2_4_14_after_nirmul"
+history_path="..\\history_fnn_Anna__0_1_2_4_14_after_nirmul.csv"
+dest_dir="..\\gradcam_output"
 
 my_class_predict=0
 my_class_add_image=1
