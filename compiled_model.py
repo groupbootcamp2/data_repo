@@ -2,18 +2,22 @@ import cv2
 import pandas as pd
 import keras
 import numpy as np
-from keras.utils import load_img , img_to_array, save_img
+from PIL import Image
+from keras.utils import load_img, img_to_array, save_img
 
 import config as cnfg
 import create_data as cd
+
 
 def load_compiled_model():
     model = keras.models.load_model(cnfg.model_path)
     return model
 
+
 def load_history():
     history=pd.read_csv(cnfg.history_path)
     return history
+
 
 def load_data():
     loaded_data = np.load('./'+cnfg.z_file_path)
@@ -29,37 +33,34 @@ def load_data():
     y_validation = keras.utils.to_categorical(y_validation, num_classes)
     return x_train, x_validation, x_test, y_train, y_validation, y_test
 
+
 def load_our_labels():
     return cd.get_model_classes_dict()
 
 
-#load image with keras
+# load image with keras
 def preprecessing_for_predict1(image):
     if isinstance(image, str):
-        image = load_img(image, target_size=(32,32))
+        image = load_img(image, target_size=(32, 32))
     image=img_to_array(image)
     image = image.reshape(-1, 32, 32, 3)
     image = image.astype('float32')
     image /= 255
     return image
 
+
 def predict_by_image1(image):
     model = load_compiled_model()
     image=preprecessing_for_predict(image)
     prediction = model.predict(image,verbose=0)
-    print(prediction)
     pred = np.argsort(prediction)
-    print(pred)
     pred = pred[0][-3:]
-    print(pred)
     labels = [cd.get_model_classes_dict()[pred[-1]], cd.get_model_classes_dict()[pred[-2]],
               cd.get_model_classes_dict()[pred[-3]]]
-    print(labels)
     percent = ["%5.2f" % (float(prediction[0][pred[-1]]) * 100) + "%",
                "%5.2f" % (float(prediction[0][pred[-2]]) * 100) + "%",
                "%5.2f" % (float(prediction[0][pred[-3]]) * 100) + "%"]
     res_dict= {labels[i]: percent[i] for i in range(len(percent))}
-    print(res_dict)
     return res_dict
 
 
@@ -72,6 +73,7 @@ def preprecessing_for_predict(image):
     image = image.astype('float32')
     image /= 255
     return image
+
 
 def predict_by_image(image):
     model = load_compiled_model()
@@ -86,3 +88,28 @@ def predict_by_image(image):
                "%5.2f" % (float(prediction[0][pred[-3]]) * 100) + "%"]
     res_dict= {labels[i]: percent[i] for i in range(len(percent))}
     return res_dict
+
+
+#
+# def wrong_preprocessing(image):
+#
+#     image = Image.open(image)
+#     print(Image)
+#     image.save("outt.png")
+#     imagecv2=cv2.imread("outt.png")
+#     image=cv2.resize(imagecv2, (32, 32), interpolation=cv2.INTER_AREA)
+#     # print(imagecv2.shape)
+#
+#     # image = np.resize(imagecv2, (32, 32, 3))
+#     print(image.size)
+#     print(image.shape)
+#     print(image)
+#     cv2.imwrite("out.png", image)
+#     image = image.reshape(-1, 32, 32, 3)
+#     print(image.shape)
+#
+#     image = image.astype('float32')
+#     image /= 255
+#
+# wrong_preprocessing('output0.png')
+# preprecessing_for_predict1('output0.png')
