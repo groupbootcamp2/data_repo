@@ -1,6 +1,7 @@
 csv_path = "..\\cifar10_100.csv"
 images_dir_path= '..\\resources\\'
 dataset_dir_name='..'
+open_file_path='.\\resources'
 files_list_cifar10=[('data_batch_' + str(i)) for i in range(1, 6)] + ["test_batch"]
 files_list_cifar100=['train', 'test']
 meta_file_cifar10="batches.meta"
@@ -12,7 +13,7 @@ label_head_cifar10=b'labels'
 label_head_cifar100=b'coarse_labels'
 image_size=32
 num_classes_cifar10=10
-num_classes_cifar100=15
+num_classes_cifar100=20
 
 
 train_part=0.6

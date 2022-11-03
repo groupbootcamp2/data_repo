@@ -212,7 +212,10 @@ class PredictDialog(QDialog, QWidget):
             prediction=cm.predict_by_image(f"output{self.my_class}.png")
             keys=list(prediction.keys())
             values=list(prediction.values())
-            self.predict_label.setText(rf"Your image is:<br> {keys[0]}: {values[0]} <br> {keys[1]}: {values[1]} <br> {keys[2]}: {values[2]}")
+            if float(values[0][:-1]) < 60.0:
+                self.predict_label.setText(rf"No class matches your image <br> Try another image")
+            else:
+                self.predict_label.setText(rf"Your image is:<br> {keys[0]}: {values[0]} <br> {keys[1]}: {values[1]} ")
             gradcam.main()
             # image = cv2.imread(cnfg.dest_dir+"//output0.png")
             # image = cv2.resize(image, (image.width*6, image.height*6), interpolation=cv2.INTER_AREA)
@@ -262,7 +265,7 @@ class PredictDialog(QDialog, QWidget):
     def openFileNameDialog(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName = QFileDialog.getOpenFileName(self, 'Load image', '', 'Motor Files (*.jpg *.png)')[0]
+        fileName = QFileDialog.getOpenFileName(self, 'Load image', cnfg.open_file_path, 'Motor Files (*.jpg *.png)')[0]
         if (fileName):
             self.showImage(fileName)
 
@@ -278,7 +281,7 @@ class PredictDialog(QDialog, QWidget):
         elif h > w:
             border = ((h-w)//2, 0,  (h-w)//2, 0)
             image = ImageOps.expand(image, border=border, fill=RGB(245, 245, 245))
-        image = image.resize((400,400))
+        image = image.resize((400, 400))
         image.save(f"output{self.my_class}.png")
 
         pixmap = QtGui.QPixmap(f"output{self.my_class}.png")
@@ -289,17 +292,17 @@ class AddImageDialog(QDialog,QWidget ):
 
     def __init__(self, my_class):
         super().__init__()
-        self.my_class:int=my_class
+        self.my_class: int = my_class
         self.is_first = True
         self.imageLabel = imageQLabel(parent_class=self.my_class)
         self.imageLabel.setPixmap(QtGui.QPixmap())
         self.imageLabel.setStyleSheet("border: 1px solid black; ")
-        self.imageLabel.setFixedSize(400,400)
+        self.imageLabel.setFixedSize(400, 400)
 
         self._file_menu = None
         self._menu_bar = None
         self._exit_action = None
-        self.camera=None
+        self.camera = None
 
         self.create_menu()
         self.create_first_button_layout()
@@ -315,17 +318,16 @@ class AddImageDialog(QDialog,QWidget ):
 
     def add_image_to_test(self):
         if self.is_first == False:
-            value_labal = self.labels_comboBox.currentText()
-            labels=cm.load_our_labels()
+            value_label = self.labels_comboBox.currentText()
+            labels = cm.load_our_labels()
             timestamp = time.strftime("%d-%b-%Y-%H_%M_%S")
             image_name = f"personal-{timestamp}.png"
-            cd.insert_personal_image_to_csv(image_name,(list(labels.keys())[list(labels.values()).index(value_labal)]))
+            cd.insert_personal_image_to_csv(image_name, (list(labels.keys())[list(labels.values()).index(value_label)]))
             self.imageLabel.setPixmap(QtGui.QPixmap())
             self.is_first = True
 
     def open_camera(self):
-         self.camera = Camera(self.my_class)
-
+        self.camera = Camera(self.my_class)
 
     def create_menu(self):
         self._menu_bar = QMenuBar()
@@ -362,8 +364,8 @@ class AddImageDialog(QDialog,QWidget ):
     def openFileNameDialog(self):
         options = QFileDialog.Options()
         options |= QFileDialog.DontUseNativeDialog
-        fileName = QFileDialog.getOpenFileName(self, 'Load image', '', 'Motor Files (*.png *jpg)')[0]
-        if (fileName):
+        fileName = QFileDialog.getOpenFileName(self, 'Load image',cnfg.open_file_path, 'Motor Files (*.png *jpg)')[0]
+        if fileName:
             self.showImage(fileName)
 
     def showImage(self, image_path: str):
@@ -406,17 +408,17 @@ class VisualizationDialog(QDialog):
 
         button = QPushButton(f"show splited classes count")
         button.clicked.connect(lambda x: dv.show_splited_classes_count())
-        button.setStyleSheet("hieght:35px; background-color:#104E8B")
+        button.setStyleSheet("hieght:35px; background-color:#7AC5CD")
         data_visu.addWidget(button,0,0)
 
         button = QPushButton(f"show classes count")
         button.clicked.connect(lambda x: dv.show_classes_count())
-        button.setStyleSheet("hieght:35px; background-color:#1874CD")
+        button.setStyleSheet("hieght:35px; background-color:#7AC5CD")
         data_visu.addWidget(button,0,1)
 
         button = QPushButton(f"show 10 images of class:")
         button.clicked.connect(self.show_10_image_of_class)
-        button.setStyleSheet("hieght:35px; background-color:#1C86EE")
+        button.setStyleSheet("hieght:35px; background-color:#7AC5CD")
         data_visu.addWidget(button,1,0)
 
         self.labels_comboBox = QComboBox()
@@ -442,22 +444,22 @@ class VisualizationDialog(QDialog):
 
         button = QPushButton(f"show confusion matrix")
         button.clicked.connect(lambda x: mv.show_confusion_matrix())
-        button.setStyleSheet("hieght:35px; background-color:#8B0A50")
+        button.setStyleSheet("hieght:35px; background-color:#7AC5CD")
         model_visu.addWidget(button,0,0)
 
         button = QPushButton(f"show predicts samples")
         button.clicked.connect(lambda x: mv.show_samples_after_predict())
-        button.setStyleSheet("hieght:35px; background-color:#CD1076")
+        button.setStyleSheet("hieght:35px; background-color:#7AC5CD")
         model_visu.addWidget(button,0,1)
 
         button = QPushButton(f"show wrong predicts ")
         button.clicked.connect(lambda x: mv.show_wrong_predicts())
-        button.setStyleSheet("hieght:35px; background-color:#EE1289 ")
+        button.setStyleSheet("hieght:35px; background-color:#7AC5CD ")
         model_visu.addWidget(button,1,0)
 
         button = QPushButton(f"show plot model history")
         button.clicked.connect(lambda x: mv.plotmodelhistory())
-        button.setStyleSheet("hieght:35px; background-color:#FF1493 ")
+        button.setStyleSheet("hieght:35px; background-color:#7AC5CD ")
         model_visu.addWidget(button,1,1)
 
         self.model_visu_gbox.setLayout(model_visu)

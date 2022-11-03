@@ -115,7 +115,7 @@ def process_sample(img_path, dest_dir, model):
     image = x.reshape(-1, 32, 32, 3)
     image = image.astype('float32')
     image /= 255
-    preds = model.predict(image)[0]
+    preds = model.predict(image, verbose=0)[0]
     label = np.argmax(preds)
     cam = GradCAM(model, label)
     heatmap = cam.compute_heatmap(image)

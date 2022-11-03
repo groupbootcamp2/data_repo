@@ -12,6 +12,28 @@ y_pred = model.predict(x_test, verbose=0)
 Y_pred_classes = np.argmax(y_pred, axis=1)
 Y_true = np.argmax(y_test, axis=1)
 
+
+def change_ypred_to_3d(y_pred):
+    new_y_pred=[]
+    for i in(y_pred):
+        pred = np.argsort(i)
+        pred = pred[-2:]
+        new_y_pred.append(pred)
+    return new_y_pred
+# change_ypred_to_3d(y_pred)
+
+def change_ypred_1d(y_pred):
+    y_pred_3d=change_ypred_to_3d(y_pred)
+    y_pred_1d=[]
+    for i in range(len(y_pred_3d)):
+        if(Y_true[i] in y_pred_3d[i]):
+            y_pred_1d.append(Y_true[i])
+        else:
+            y_pred_1d.append(y_pred_3d[i][0])
+    return y_pred_1d
+change_ypred_1d(y_pred)
+
+
 def heatmap(data, row_labels, col_labels, ax=None, cbar_kw={}, cbarlabel="", **kwargs):
     if not ax:
         ax = plt.gca()
@@ -42,14 +64,18 @@ def annotate_heatmap(im, data=None, fmt="d", threshold=None):
             texts.append(text)
     return texts
 
+
 def show_confusion_matrix():
-    cm = confusion_matrix(Y_true, Y_pred_classes)
+    y_pred_1d = change_ypred_1d(y_pred)
+    #new accuracy
+    cm = confusion_matrix(Y_true, y_pred_1d)
+    #old accuracy
+    # cm = confusion_matrix(Y_true, Y_pred_classes)
     thresh = cm.max() / 2.
     fig, ax = plt.subplots(figsize=(12, 12))
     im, cbar = heatmap(cm, labels.values(), labels.values(), ax=ax,
                        cmap=plt.cm.Blues, cbarlabel="count of predictions")
     texts = annotate_heatmap(im, data=cm, threshold=thresh)
-
     fig.tight_layout()
     plt.show()
 

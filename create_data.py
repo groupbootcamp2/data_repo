@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import os
-from PIL import Image as im
 from typing import List, Dict
 from sklearn.utils import shuffle
 import cv2
@@ -50,7 +49,7 @@ def save_image( data_arr, path_to_save):
     rgb_array[..., 0] = array[:vector_size].reshape(cnfg.image_size, cnfg.image_size)
     rgb_array[..., 1] = array[vector_size:vector_size*2].reshape(cnfg.image_size, cnfg.image_size)
     rgb_array[..., 2] = array[vector_size*2:vector_size*3].reshape(cnfg.image_size, cnfg.image_size)
-    img = im.fromarray(rgb_array)
+    img = Image.fromarray(rgb_array)
     img.save(path_to_save)
 
 
@@ -155,7 +154,7 @@ def save_images_as_nparray():
     y_validation = np.array(y_validation)
     y_test = np.array(y_test)
     return images_xtrain, images_xvalidation, images_xtest, y_train, y_validation, y_test
-save_images_as_nparray()
+
 
 def save_to_zip():
     images_xtrain, images_xvalidation, images_xtest, y_train, y_validation, y_test = save_images_as_nparray()
